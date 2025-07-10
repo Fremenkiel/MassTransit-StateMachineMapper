@@ -1,0 +1,31 @@
+services:
+  db:
+    container_name: masstransit_db
+    image: state-machine-mapper/masstransit/backend/preloaded-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      TZ: "UTC"
+      PGTZ: "UTC"
+    ports:
+      - "5432:5432"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+  rabbitMq:
+    container_name: masstransit_rabbitMq
+    image: rabbitmq:4-management
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: rabbitmq
+      RABBITMQ_DEFAULT_VHOST: /
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
