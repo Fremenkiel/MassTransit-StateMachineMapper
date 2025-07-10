@@ -45,4 +45,6 @@ This endpoint stops the HostReceiveEndpointHandle build by the DynamicStateMachi
 The other exchanges created for the commands end events are not removed, as these will be reused by any other endpoint created.
 
 ## Credits
+Massive credits to Chris Patterson for creating and maintaining the MassTransit library, the existence of it made my life a whole lot easier.
+
 Credit to milanjovanovic.tech for the base example which this project is based on.
