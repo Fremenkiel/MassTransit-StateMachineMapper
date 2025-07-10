@@ -24,11 +24,6 @@ public static class Program
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         var builder = WebApplication.CreateBuilder(args);
-
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
-
-        builder.Services.AddTransient<IEmailService, EmailService>();
         
         builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("Database")!, builder =>
         {
@@ -80,6 +75,8 @@ public static class Program
             });
 
         });
+
+        builder.Services.AddTransient<IEmailService, EmailService>();
         
         builder.Services.AddMvc();
         builder.Services.AddControllers();
