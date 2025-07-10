@@ -3,11 +3,9 @@ using System.Linq.Expressions;
 using MassTransit;
 using StateMachineMapper.Events.Interfaces;
 
-namespace StateMachineMapper.Sagas.Correlator;
+namespace StateMachineMapper.StateMachine.Correlator;
 
-
-
-public abstract class CorrelatingSaga<TInstance> : MassTransitStateMachine<TInstance>
+public abstract class CorrelatingStateMachine<TInstance> : MassTransitStateMachine<TInstance>
     where TInstance : class, SagaStateMachineInstance
 {
     protected void CorrelateEventById<TMessage>(Expression<Func<Event<TMessage>>> propertyExpression)

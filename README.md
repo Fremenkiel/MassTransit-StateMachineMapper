@@ -12,7 +12,7 @@ The project contains a docker build file for a postgrsql instance used in this e
 1. Start by building the docker file, to generate the image used in the docker compose file.
 
 ```
-cd ./docker
+cd ./docker/
 
 docker buildx build --platform linux/amd64 --rm -f ./Dockerfile -t state-machine-mapper/masstransit/backend/preloaded-db:latest .
 ```

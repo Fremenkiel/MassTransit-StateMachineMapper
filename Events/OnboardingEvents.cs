@@ -1,6 +1,5 @@
 using System;
 using StateMachineMapper.Events.Interfaces;
-using StateMachineMapper.Sagas.Correlator;
 
 namespace StateMachineMapper.Events;
 

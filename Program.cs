@@ -1,11 +1,13 @@
 using System;
+using System.Collections.Generic;
 using StateMachineMapper.Commands;
 using StateMachineMapper.Database;
 using StateMachineMapper.Interfaces;
-using StateMachineMapper.Sagas.Data;
+using StateMachineMapper.StateMachine.Data;
 using StateMachineMapper.Services;
 using StateMachineMapper.StateMachine;
 using MassTransit;
+using MassTransit.Logging;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +16,13 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Npgsql;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using StateMachineMapper.Constants;
+using StateMachineMapper.Manager;
+using StateMachineMapper.StateMachine.Data;
+using StateMachineMapper.StateMachine.Manager;
+using StateMachineMapper.StateMachine.Manager.Interfaces;
 
 namespace StateMachineMapper;
 
@@ -24,25 +33,27 @@ public static class Program
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         var builder = WebApplication.CreateBuilder(args);
-        
-        builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("Database")!, builder =>
+
+        builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
+
+        builder.Services.AddNpgsqlDataSource(builder.Configuration.GetConnectionString("Database")!, npgsqlDataSourceBuilder =>
         {
-            builder.UseNetTopologySuite();
-            builder.EnableDynamicJson();
+            npgsqlDataSourceBuilder.UseNetTopologySuite();
+            npgsqlDataSourceBuilder.EnableDynamicJson();
         });
-        
+
         var wDataSourceBuilder =
             new NpgsqlDataSourceBuilder(builder.Configuration.GetConnectionString("Database")!);
         wDataSourceBuilder.UseNetTopologySuite();
         wDataSourceBuilder.EnableDynamicJson();
         var wDataSource = wDataSourceBuilder.Build();
 
-        builder.Services.AddDbContext<DefaultDatabaseContext>((ctx) =>
+        builder.Services.AddDbContext<DefaultDatabaseContext>(ctx =>
         {
-            ctx.UseNpgsql(wDataSource, builder =>
+            ctx.UseNpgsql(wDataSource, npgsqlDbContextOptionsBuilder =>
             {
-                builder.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
-                builder.UseNetTopologySuite();
+                npgsqlDbContextOptionsBuilder.UseQuerySplittingBehavior(QuerySplittingBehavior.SingleQuery);
+                npgsqlDbContextOptionsBuilder.UseNetTopologySuite();
             });
             ctx.ConfigureWarnings(wc => wc.Ignore(RelationalEventId.PendingModelChangesWarning).Ignore(RelationalEventId.BoolWithDefaultWarning).Ignore(CoreEventId.ManyServiceProvidersCreatedWarning));
         });
@@ -55,34 +66,59 @@ public static class Program
 
             busConfigurator.AddConsumers(typeof(Program).Assembly);
 
-            busConfigurator.AddSagaStateMachine<OnboardingSaga, OnboardingSagaData>()
+            busConfigurator.AddSagaStateMachine<OnboardingStateMachine, OnboardingStateMachineData>()
                 .EntityFrameworkRepository(r =>
                 {
                     r.ExistingDbContext<DefaultDatabaseContext>();
 
                     r.UsePostgres();
                 });
-            
-            busConfigurator.UsingRabbitMq((context, cfg) =>
+
+            busConfigurator.UsingRabbitMq((_, cfg) =>
             {
-                cfg.Host("localhost", "/", h =>
+                cfg.Host(builder.Configuration["AppSettings:RabbitMq:Host"], builder.Configuration["AppSettings:RabbitMq:VHost"], h =>
                 {
-                    h.Username("rabbitmq");
-                    h.Password("rabbitmq");
+                    h.Username(builder.Configuration["AppSettings:RabbitMq:Username"]!);
+                    h.Password(builder.Configuration["AppSettings:RabbitMq:Password"]!);
                 });
-                
-                cfg.ConfigureEndpoints(context);
             });
 
+            builder.Services.AddOpenTelemetry()
+                .ConfigureResource(ConfigureResource)
+                .WithTracing(b => b
+                    .AddSource(DiagnosticHeaders.DefaultListenerName)
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault()
+                        .AddService(builder.Environment.ApplicationName)
+                        .AddTelemetrySdk()
+                        .AddAttributes(
+                            new KeyValuePair<string, object>[]
+                            {
+                                new("deployment.environment", builder.Environment.EnvironmentName),
+                            })
+                        .AddEnvironmentVariableDetector())
+                    .AddAspNetCoreInstrumentation(o =>
+                    {
+                        o.RecordException = true;
+                    })
+                    .AddHttpClientInstrumentation(o =>
+                    {
+                        o.RecordException = true;
+                    })
+                    .AddConsoleExporter()
+                );
         });
 
+        builder.Services.AddSingleton<EndpointManager>();
+        builder.Services.AddSingleton<RabbitMqManager>();
+
+        builder.Services.AddTransient<IDynamicStateMachineManager, DynamicStateMachineManager>();
         builder.Services.AddTransient<IEmailService, EmailService>();
-        
+
         builder.Services.AddMvc();
         builder.Services.AddControllers();
         builder.Services.AddSwaggerGen();
         builder.Services.AddControllersWithViews();
-        
+
         var app = builder.Build();
 
         app.UseRouting();
@@ -96,18 +132,25 @@ public static class Program
                     "{controller=Home}/{action=Index}/{id?}");
             }
         });
-        
+
         app.UseSwagger();
         app.UseSwaggerUI();
 
         using var scope = app.Services.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<DefaultDatabaseContext>();
         context.Database.Migrate();
-        
+
         app.UseHttpsRedirection();
 
         app.Run();
 
         return 0;
+    }
+
+    private static void ConfigureResource(this ResourceBuilder r)
+    {
+        r.AddService("State Machine Mapper",
+            serviceVersion: "0.0.1",
+            serviceInstanceId: Environment.MachineName);
     }
 }

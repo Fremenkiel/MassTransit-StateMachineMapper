@@ -13,17 +13,19 @@ namespace StateMachineMapper.Controllers;
 public class OnboardingController : ControllerBase
 {
     private readonly IBus _bus;
-    
+
     public OnboardingController(IBus bus)
     {
         _bus = bus;
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Post([FromBody] string email)
+    [HttpPost("{queryName:guid}")]
+    public async Task<IActionResult> Post(Guid queryName, [FromBody] string email)
     {
-        await _bus.Publish(new Onboarding(email));
+        var endpoint = await _bus.GetSendEndpoint(new Uri($"queue:{queryName}"));
+        await endpoint.Send(new Onboarding(email));
+
         return Accepted();
     }
-    
+
 }

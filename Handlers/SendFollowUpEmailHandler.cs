@@ -17,7 +17,7 @@ public class SendFollowUpEmailHandler : IConsumer<SendFollowUpEmail>
     public async Task Consume(ConsumeContext<SendFollowUpEmail> context)
     {
         await _emailService.SendFollowUpEmailAsync(context.Message.Email);
-        
+
         await context.Publish(new FollowUpEmailSent
         {
             SubscriptionId = context.Message.SubscriptionId,
