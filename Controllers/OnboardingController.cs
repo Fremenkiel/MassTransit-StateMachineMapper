@@ -23,7 +23,7 @@ public class OnboardingController : ControllerBase
     public async Task<IActionResult> Post(Guid queryName, [FromBody] string email)
     {
         var endpoint = await _bus.GetSendEndpoint(new Uri($"queue:{queryName}"));
-        await endpoint.Send(new Onboarding(email));
+        await endpoint.Send(new Onboarding(queryName, email));
 
         return Accepted();
     }

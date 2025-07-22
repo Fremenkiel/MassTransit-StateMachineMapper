@@ -7,6 +7,7 @@ public record SubscriberCreated : ICorrelatableById
 {
     public Guid CorrelationId { get; init; }
     public Guid SubscriptionId { get; set; }
+    public Guid TemplateId { get; set; }
     public string Email { get; set; }
 }
 

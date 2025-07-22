@@ -49,9 +49,10 @@ public class OnboardingStateMachine : CorrelatingStateMachine<OnboardingStateMac
             {
                 if (context.Message is SubscriberCreated msg)
                 {
-                    context.Saga.SubscriptionId = msg.SubscriptionId;
                     context.Saga.Email = msg.Email;
+                    context.Saga.TemplateId = msg.TemplateId;
                 }
+                context.Saga.SubscriptionId = context.Message.SubscriptionId;
             }),
             ["MarkWelcomeEmailSent"] = new (context => context.Saga.WelcomeEmailSent = true),
             ["MarkFollowUpEmailSentAndComplete"] = new (context =>
@@ -63,8 +64,8 @@ public class OnboardingStateMachine : CorrelatingStateMachine<OnboardingStateMac
 
         PublishFactories = new Dictionary<string, IMessageFactory>
         {
-            ["SendWelcomeEmail"] = new MessageFactory<SendWelcomeEmail>(context => new SendWelcomeEmail(context.Message.SubscriptionId, context.Saga.Email)),
-            ["SendFollowUpEmail"] = new MessageFactory<SendFollowUpEmail>(context => new SendFollowUpEmail(context.Message.SubscriptionId, context.Saga.Email)),
+            ["SendWelcomeEmail"] = new MessageFactory<SendWelcomeEmail>(context => new SendWelcomeEmail(context.Saga.TemplateId, context.Message.SubscriptionId, context.Saga.Email)),
+            ["SendFollowUpEmail"] = new MessageFactory<SendFollowUpEmail>(context => new SendFollowUpEmail(context.Saga.TemplateId, context.Message.SubscriptionId, context.Saga.Email)),
             ["PublishOnboardingCompleted"] = new MessageFactory<OnboardingCompleted>(context => new OnboardingCompleted { SubscriptionId = context.Message.SubscriptionId }),
         };
 

@@ -12,7 +12,7 @@ using StateMachineMapper.Database;
 namespace StateMachineMapper.Migrations
 {
     [DbContext(typeof(DefaultDatabaseContext))]
-    [Migration("20250710145005_InitialMigration")]
+    [Migration("20250722140554_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -254,6 +254,9 @@ namespace StateMachineMapper.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<Guid>("SubscriptionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TemplateId")
                         .HasColumnType("uuid");
 
                     b.Property<bool>("WelcomeEmailSent")

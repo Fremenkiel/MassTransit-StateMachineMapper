@@ -11,6 +11,7 @@ public class OnboardingStateMachineData : SagaStateMachineInstance
     public string CurrentState { get; set; }
 
     public Guid SubscriptionId { get; set; }
+    public Guid TemplateId { get; set; }
     [StringLength(500)]
     public string Email { get; set; } = string.Empty;
     public bool WelcomeEmailSent { get; set; }

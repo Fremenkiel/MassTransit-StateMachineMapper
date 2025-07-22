@@ -20,64 +20,50 @@ public class EventBehaviorBuilder<TMessage> : IEventBehaviorBuilder
 
     public void Build(OnboardingStateMachine stateMachine, IGrouping<string,StateMachineTemplateEntry> behaviorGroup)
     {
+        var initialStateName = behaviorGroup.FirstOrDefault(x => x.InitialStateName != "")?.InitialStateName;
 
-            var initialStateName = behaviorGroup.FirstOrDefault(x => x.InitialStateName != "")?.InitialStateName;
+        if (initialStateName == null)
+            return;
 
-            if (initialStateName == null)
-                return;
-
-            if (initialStateName == "Initially")
+        if (stateMachine.ThenActivities.TryGetValue(
+                behaviorGroup.First(x => x.ActionType == "Then").ActionParameter, out var thenWrapper))
+        {
+            if (stateMachine.PublishFactories.TryGetValue(
+                    behaviorGroup.FirstOrDefault(x => x.ActionType == "Publish")?.ActionParameter ?? "",
+                    out var factory))
             {
-                    if (stateMachine.PublishFactories.TryGetValue(behaviorGroup.FirstOrDefault(x => x.ActionType == "Publish")?.ActionParameter ?? "", out var factory))
-                    {
-                        stateMachine.InitiallyBinder(ApplyActivities(stateMachine, behaviorGroup)
-                            .TransitionTo(stateMachine.GetState(behaviorGroup.FirstOrDefault(x => x.ActionType == "TransitionTo")?.ActionParameter ?? ""))
-                            .Then(context => factory.Apply(context)));
-                    }
-            }
-            else if (behaviorGroup.Any(x => x.ActionType == "Finalize"))
-            {
-                if (stateMachine.PublishFactories.TryGetValue(behaviorGroup.FirstOrDefault(x => x.ActionType == "Publish")?.ActionParameter ?? "", out var factory))
+                if (initialStateName == "Initially")
                 {
-                    stateMachine.DuringBinder(stateMachine.StateBinder(initialStateName),ApplyActivities(stateMachine, behaviorGroup)
-                        .TransitionTo(stateMachine.GetState(behaviorGroup.FirstOrDefault(x => x.ActionType == "TransitionTo")?.ActionParameter ?? ""))
-                        .Then(context => factory.Apply(context))
-                        .Finalize());
-                }
-            }
-            else
-            {
-                if (stateMachine.PublishFactories.TryGetValue(behaviorGroup.FirstOrDefault(x => x.ActionType == "Publish")?.ActionParameter ?? "", out var factory))
-                {
-                    stateMachine.DuringBinder(stateMachine.StateBinder(initialStateName),ApplyActivities(stateMachine, behaviorGroup)
-                        .TransitionTo(stateMachine.GetState(behaviorGroup.FirstOrDefault(x => x.ActionType == "TransitionTo")?.ActionParameter ?? ""))
+                    stateMachine.InitiallyBinder(stateMachine.CreateBinder(_event)
+                        .Then(Action)
+                        .TransitionTo(stateMachine.GetState(behaviorGroup
+                            .FirstOrDefault(x => x.ActionType == "TransitionTo")?.ActionParameter ?? ""))
                         .Then(context => factory.Apply(context)));
                 }
+                else if (behaviorGroup.Any(x => x.ActionType == "Finalize"))
+                {
+                    stateMachine.DuringBinder(stateMachine.StateBinder(initialStateName),
+                        stateMachine.CreateBinder(_event)
+                            .Then(Action)
+                            .TransitionTo(stateMachine.GetState(behaviorGroup
+                                .FirstOrDefault(x => x.ActionType == "TransitionTo")?.ActionParameter ?? ""))
+                            .Then(context => factory.Apply(context))
+                            .Finalize());
+                }
+                else
+                {
+                    stateMachine.DuringBinder(stateMachine.StateBinder(initialStateName),
+                        stateMachine.CreateBinder(_event)
+                            .Then(Action)
+                            .TransitionTo(stateMachine.GetState(behaviorGroup
+                                .FirstOrDefault(x => x.ActionType == "TransitionTo")?.ActionParameter ?? ""))
+                            .Then(context => factory.Apply(context)));
+                }
             }
-    }
-
-    private EventActivityBinder<OnboardingStateMachineData, TMessage> ApplyActivities(OnboardingStateMachine stateMachine, IEnumerable<StateMachineTemplateEntry> steps)
-    {
-        var binder = stateMachine.CreateBinder(_event);
-        foreach (var step in steps)
-        {
-            switch (step.ActionType)
+            void Action(BehaviorContext<OnboardingStateMachineData, TMessage> context)
             {
-                case "Then":
-                    if (stateMachine.ThenActivities.TryGetValue(step.ActionParameter, out var thenWrapper))
-                    {
-                        var wrapper = thenWrapper;
-
-                        void Action(BehaviorContext<OnboardingStateMachineData, TMessage> context)
-                        {
-                            wrapper.Logic(context);
-                        }
-
-                        binder.Then(Action);
-                    }
-                    break;
+                thenWrapper.Logic(context);
             }
         }
-        return binder;
     }
 }

@@ -10,10 +10,12 @@ namespace StateMachineMapper.Handlers;
 
 public class OnboardingHandler : IConsumer<Onboarding>
 {
+    private readonly IBus _bus;
     private readonly DefaultDatabaseContext _dbContext;
 
-    public OnboardingHandler(DefaultDatabaseContext dbContext)
+    public OnboardingHandler(IBus bus, DefaultDatabaseContext dbContext)
     {
+        _bus = bus;
         _dbContext = dbContext;
     }
 
@@ -28,11 +30,13 @@ public class OnboardingHandler : IConsumer<Onboarding>
 
         await _dbContext.SaveChangesAsync();
 
+        var endpoint = await _bus.GetSendEndpoint(new Uri($"queue:{context.Message.TemplateId}"));
 
-        await context.Publish(new SubscriberCreated
+        await endpoint.Send(new SubscriberCreated
         {
             CorrelationId = context.CorrelationId ?? Guid.NewGuid(),
             SubscriptionId = subscription.Entity.Id,
+            TemplateId = context.Message.TemplateId,
             Email = subscription.Entity.Email
         });
     }

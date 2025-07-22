@@ -24,6 +24,7 @@ namespace StateMachineMapper.Migrations
                     CorrelationId = table.Column<Guid>(type: "uuid", nullable: false),
                     CurrentState = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     SubscriptionId = table.Column<Guid>(type: "uuid", nullable: false),
+                    TemplateId = table.Column<Guid>(type: "uuid", nullable: false),
                     Email = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     WelcomeEmailSent = table.Column<bool>(type: "boolean", nullable: false),
                     FollowUpEmailSent = table.Column<bool>(type: "boolean", nullable: false),

@@ -253,6 +253,9 @@ namespace StateMachineMapper.Migrations
                     b.Property<Guid>("SubscriptionId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("TemplateId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("WelcomeEmailSent")
                         .HasColumnType("boolean");
 
