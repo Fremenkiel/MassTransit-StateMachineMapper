@@ -30,6 +30,9 @@ public class DynamicStateMachineManager : IDynamicStateMachineManager
     public async Task ConnectStateMachine<TState>(Guid queueName)
         where TState : class, SagaStateMachineInstance, new()
     {
+        if (_endpointManager.ContainsEndpoint(queueName))
+            return;
+
         _endpointManager.AssignEndpointName(queueName);
 
         var template = await _dbContext.StateMachineTemplates
@@ -46,10 +49,6 @@ public class DynamicStateMachineManager : IDynamicStateMachineManager
         handle = _receiveEndpointConnector.ConnectReceiveEndpoint(queueName.ToString(), (context, cfg) =>
         {
             cfg.PrefetchCount = 4;
-            foreach (var customer in template.Consumers)
-            {
-                cfg.ConfigureConsumer(context, typeof(HandlersClassesAssemblyHelper).Assembly.GetTypes().First(x => x.Name == customer.HandlerName && x.Namespace == HandlersClassesAssemblyHelper.Namespace));
-            }
 
             cfg.StateMachineSaga<TState>(context, stateMachineConfigurator =>
             {

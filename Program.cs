@@ -23,6 +23,7 @@ using StateMachineMapper.Manager;
 using StateMachineMapper.StateMachine.Data;
 using StateMachineMapper.StateMachine.Manager;
 using StateMachineMapper.StateMachine.Manager.Interfaces;
+using StateMachineMapper.StateMachine.TransientRegistrationConfigurator;
 
 namespace StateMachineMapper;
 
@@ -60,27 +61,29 @@ public static class Program
 
         builder.Services.AddScoped<DbContext>(provider => provider.GetService<DefaultDatabaseContext>());
 
-        builder.Services.AddMassTransit(busConfigurator =>
+        builder.Services.AddTransientMassTransit(busConfigurator =>
         {
             busConfigurator.SetKebabCaseEndpointNameFormatter();
 
             busConfigurator.AddConsumers(typeof(Program).Assembly);
 
-            busConfigurator.AddSagaStateMachine<OnboardingStateMachine, OnboardingStateMachineData>()
+            busConfigurator.AddTransientSagaStateMachine<OnboardingStateMachine, OnboardingStateMachineData>()
                 .EntityFrameworkRepository(r =>
                 {
                     r.ExistingDbContext<DefaultDatabaseContext>();
 
                     r.UsePostgres();
-                });
+                }).ExcludeFromConfigureEndpoints();
 
-            busConfigurator.UsingRabbitMq((_, cfg) =>
+            busConfigurator.UsingRabbitMq((context, cfg) =>
             {
                 cfg.Host(builder.Configuration["AppSettings:RabbitMq:Host"], builder.Configuration["AppSettings:RabbitMq:VHost"], h =>
                 {
                     h.Username(builder.Configuration["AppSettings:RabbitMq:Username"]!);
                     h.Password(builder.Configuration["AppSettings:RabbitMq:Password"]!);
                 });
+
+                cfg.ConfigureEndpoints(context);
             });
 
             builder.Services.AddOpenTelemetry()
@@ -110,9 +113,9 @@ public static class Program
 
         builder.Services.AddSingleton<EndpointManager>();
         builder.Services.AddSingleton<RabbitMqManager>();
+        builder.Services.AddSingleton<IEmailService, EmailService>();
 
         builder.Services.AddTransient<IDynamicStateMachineManager, DynamicStateMachineManager>();
-        builder.Services.AddTransient<IEmailService, EmailService>();
 
         builder.Services.AddMvc();
         builder.Services.AddControllers();

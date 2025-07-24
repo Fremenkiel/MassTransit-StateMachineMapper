@@ -37,6 +37,10 @@ namespace StateMachineMapper.Migrations
                         new
                         {
                             Id = new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95")
+                        },
+                        new
+                        {
+                            Id = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9")
                         });
                 });
 
@@ -65,26 +69,38 @@ namespace StateMachineMapper.Migrations
                         new
                         {
                             Id = 1,
-                            HandlerName = "OnboardingHandler",
-                            TemplateId = new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95")
-                        },
-                        new
-                        {
-                            Id = 2,
                             HandlerName = "SendWelcomeEmailHandler",
                             TemplateId = new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95")
                         },
                         new
                         {
-                            Id = 3,
+                            Id = 2,
                             HandlerName = "SendFollowUpEmailHandler",
                             TemplateId = new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95")
                         },
                         new
                         {
-                            Id = 4,
+                            Id = 3,
                             HandlerName = "OnboardingCompletedHandler",
                             TemplateId = new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95")
+                        },
+                        new
+                        {
+                            Id = 4,
+                            HandlerName = "SendWelcomeEmailHandler",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9")
+                        },
+                        new
+                        {
+                            Id = 5,
+                            HandlerName = "SendFollowUpEmailHandler",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9")
+                        },
+                        new
+                        {
+                            Id = 6,
+                            HandlerName = "OnboardingCompletedHandler",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9")
                         });
                 });
 
@@ -210,6 +226,95 @@ namespace StateMachineMapper.Migrations
                             InitialStateName = "FollowingUp",
                             TemplateId = new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95"),
                             TriggerEventName = "FollowUpEmailSent"
+                        },
+                        new
+                        {
+                            Id = 11,
+                            ActionParameter = "SetNewsletterInfo",
+                            ActionType = "Then",
+                            InitialStateName = "Initially",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "SignUpForNewsletter"
+                        },
+                        new
+                        {
+                            Id = 12,
+                            ActionParameter = "Welcoming",
+                            ActionType = "TransitionTo",
+                            InitialStateName = "Initially",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "SignUpForNewsletter"
+                        },
+                        new
+                        {
+                            Id = 13,
+                            ActionParameter = "SendWelcomeEmail",
+                            ActionType = "Publish",
+                            InitialStateName = "Initially",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "SignUpForNewsletter"
+                        },
+                        new
+                        {
+                            Id = 14,
+                            ActionParameter = "MarkWelcomeEmailSent",
+                            ActionType = "Then",
+                            InitialStateName = "Welcoming",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "WelcomeEmailSent"
+                        },
+                        new
+                        {
+                            Id = 15,
+                            ActionParameter = "FollowingUp",
+                            ActionType = "TransitionTo",
+                            InitialStateName = "Welcoming",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "WelcomeEmailSent"
+                        },
+                        new
+                        {
+                            Id = 16,
+                            ActionParameter = "SendFollowUpEmail",
+                            ActionType = "Publish",
+                            InitialStateName = "Welcoming",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "WelcomeEmailSent"
+                        },
+                        new
+                        {
+                            Id = 17,
+                            ActionParameter = "MarkFollowUpEmailSentAndComplete",
+                            ActionType = "Then",
+                            InitialStateName = "FollowingUp",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "FollowUpEmailSent"
+                        },
+                        new
+                        {
+                            Id = 18,
+                            ActionParameter = "Onboarding",
+                            ActionType = "TransitionTo",
+                            InitialStateName = "FollowingUp",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "FollowUpEmailSent"
+                        },
+                        new
+                        {
+                            Id = 19,
+                            ActionParameter = "PublishOnboardingCompleted",
+                            ActionType = "Publish",
+                            InitialStateName = "FollowingUp",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "FollowUpEmailSent"
+                        },
+                        new
+                        {
+                            Id = 20,
+                            ActionType = "Finalize",
+                            InitialStateName = "FollowingUp",
+                            TemplateId = new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                            TriggerEventName = "FollowUpEmailSent"
                         });
                 });
 
@@ -249,6 +354,12 @@ namespace StateMachineMapper.Migrations
 
                     b.Property<bool>("OnboardingCompleted")
                         .HasColumnType("boolean");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
 
                     b.Property<Guid>("SubscriptionId")
                         .HasColumnType("uuid");

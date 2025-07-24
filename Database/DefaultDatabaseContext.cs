@@ -14,6 +14,11 @@ public partial class DefaultDatabaseContext : DbContext
     {
         modelBuilder.Entity<OnboardingStateMachineData>().HasKey(s => s.CorrelationId);
 
+        modelBuilder.Entity<OnboardingStateMachineData>().Property(x => x.RowVersion)
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .IsRowVersion();
+
         modelBuilder.Entity<StateMachineTemplateEntry>()
             .HasOne(x => x.Template)
             .WithMany(x => x.Entries)

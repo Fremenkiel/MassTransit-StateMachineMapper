@@ -41,7 +41,7 @@ public class EndpointManager
         await RemoveEndpointAsync();
     }
 
-    public async Task RemoveEndpointAsync()
+    private async Task RemoveEndpointAsync()
     {
         if (!_endpointName.HasValue)
             return;
@@ -49,5 +49,6 @@ public class EndpointManager
         await _dynamicEndpointHandleCollection[_endpointName.Value].StopAsync();
         _dynamicEndpointHandleCollection.Remove(_endpointName.Value);
     }
+    public bool ContainsEndpoint(Guid endpointName) => _dynamicEndpointHandleCollection.ContainsKey(endpointName);
 
 }

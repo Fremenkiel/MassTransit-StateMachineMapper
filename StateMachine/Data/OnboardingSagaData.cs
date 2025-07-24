@@ -17,4 +17,5 @@ public class OnboardingStateMachineData : SagaStateMachineInstance
     public bool WelcomeEmailSent { get; set; }
     public bool FollowUpEmailSent { get; set; }
     public bool OnboardingCompleted { get; set; }
+    public uint RowVersion { get; set; }
 }

@@ -7,14 +7,14 @@ using StateMachineMapper.Commands;
 
 namespace StateMachineMapper.Controllers;
 
-[Route("api/onboarding")]
+[Route("api/newsletter")]
 [ApiController]
 [AllowAnonymous]
-public class OnboardingController : ControllerBase
+public class SignUpForNewsletterController : ControllerBase
 {
     private readonly IBus _bus;
 
-    public OnboardingController(IBus bus)
+    public SignUpForNewsletterController(IBus bus)
     {
         _bus = bus;
     }
@@ -22,7 +22,7 @@ public class OnboardingController : ControllerBase
     [HttpPost("{queryName:guid}")]
     public async Task<IActionResult> Post(Guid queryName, [FromBody] string email)
     {
-        await _bus.Publish(new Onboarding(queryName, email));
+        await _bus.Publish(new SignUp(queryName, email));
 
         return Accepted();
     }

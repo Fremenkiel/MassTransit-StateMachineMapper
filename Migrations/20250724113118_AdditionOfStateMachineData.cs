@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace StateMachineMapper.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialMigration : Migration
+    public partial class AdditionOfStateMachineData : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -28,7 +28,8 @@ namespace StateMachineMapper.Migrations
                     Email = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
                     WelcomeEmailSent = table.Column<bool>(type: "boolean", nullable: false),
                     FollowUpEmailSent = table.Column<bool>(type: "boolean", nullable: false),
-                    OnboardingCompleted = table.Column<bool>(type: "boolean", nullable: false)
+                    OnboardingCompleted = table.Column<bool>(type: "boolean", nullable: false),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -105,17 +106,23 @@ namespace StateMachineMapper.Migrations
             migrationBuilder.InsertData(
                 table: "StateMachineTemplates",
                 column: "Id",
-                value: new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95"));
+                values: new object[]
+                {
+                    new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"),
+                    new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95")
+                });
 
             migrationBuilder.InsertData(
                 table: "StateMachineTemplateConsumers",
                 columns: new[] { "Id", "HandlerName", "TemplateId" },
                 values: new object[,]
                 {
-                    { 1, "OnboardingHandler", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95") },
-                    { 2, "SendWelcomeEmailHandler", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95") },
-                    { 3, "SendFollowUpEmailHandler", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95") },
-                    { 4, "OnboardingCompletedHandler", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95") }
+                    { 1, "SendWelcomeEmailHandler", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95") },
+                    { 2, "SendFollowUpEmailHandler", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95") },
+                    { 3, "OnboardingCompletedHandler", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95") },
+                    { 4, "SendWelcomeEmailHandler", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9") },
+                    { 5, "SendFollowUpEmailHandler", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9") },
+                    { 6, "OnboardingCompletedHandler", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9") }
                 });
 
             migrationBuilder.InsertData(
@@ -132,7 +139,17 @@ namespace StateMachineMapper.Migrations
                     { 7, "MarkFollowUpEmailSentAndComplete", "Then", "FollowingUp", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95"), "FollowUpEmailSent" },
                     { 8, "Onboarding", "TransitionTo", "FollowingUp", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95"), "FollowUpEmailSent" },
                     { 9, "PublishOnboardingCompleted", "Publish", "FollowingUp", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95"), "FollowUpEmailSent" },
-                    { 10, null, "Finalize", "FollowingUp", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95"), "FollowUpEmailSent" }
+                    { 10, null, "Finalize", "FollowingUp", new Guid("e54baee0-f1a6-4e50-9e92-4f65bed95c95"), "FollowUpEmailSent" },
+                    { 11, "SetNewsletterInfo", "Then", "Initially", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "SignUpForNewsletter" },
+                    { 12, "Welcoming", "TransitionTo", "Initially", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "SignUpForNewsletter" },
+                    { 13, "SendWelcomeEmail", "Publish", "Initially", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "SignUpForNewsletter" },
+                    { 14, "MarkWelcomeEmailSent", "Then", "Welcoming", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "WelcomeEmailSent" },
+                    { 15, "FollowingUp", "TransitionTo", "Welcoming", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "WelcomeEmailSent" },
+                    { 16, "SendFollowUpEmail", "Publish", "Welcoming", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "WelcomeEmailSent" },
+                    { 17, "MarkFollowUpEmailSentAndComplete", "Then", "FollowingUp", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "FollowUpEmailSent" },
+                    { 18, "Onboarding", "TransitionTo", "FollowingUp", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "FollowUpEmailSent" },
+                    { 19, "PublishOnboardingCompleted", "Publish", "FollowingUp", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "FollowUpEmailSent" },
+                    { 20, null, "Finalize", "FollowingUp", new Guid("82213420-f7f6-4259-ac9c-84bb46be35f9"), "FollowUpEmailSent" }
                 });
 
             migrationBuilder.CreateIndex(

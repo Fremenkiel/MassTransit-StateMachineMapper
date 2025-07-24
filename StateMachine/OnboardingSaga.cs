@@ -22,6 +22,7 @@ public class OnboardingStateMachine : CorrelatingStateMachine<OnboardingStateMac
     public required State FollowingUp { get; set; }
     public required State Onboarding { get; set; }
 
+    public required Event<SignUpForNewsletter> SignUpForNewsletter { get; set; }
     public required Event<SubscriberCreated> SubscriberCreated { get; set; }
     public required Event<WelcomeEmailSent> WelcomeEmailSent { get; set; }
     public required Event<FollowUpEmailSent> FollowUpEmailSent { get; set; }
@@ -38,6 +39,7 @@ public class OnboardingStateMachine : CorrelatingStateMachine<OnboardingStateMac
 
         _eventConfigurators = new Dictionary<string, Action<OnboardingStateMachine>>
         {
+            ["SignUpForNewsletter"] = saga => CorrelateEventById(() => saga.SignUpForNewsletter),
             ["SubscriberCreated"] = saga => CorrelateEventById(() => saga.SubscriberCreated),
             ["WelcomeEmailSent"] = saga => CorrelateEventById(() => saga.WelcomeEmailSent),
             ["FollowUpEmailSent"] = saga => CorrelateEventById(() => saga.FollowUpEmailSent)
@@ -45,6 +47,14 @@ public class OnboardingStateMachine : CorrelatingStateMachine<OnboardingStateMac
 
         ThenActivities = new Dictionary<string, ActivityWrapper>
         {
+            ["SetNewsletterInfo"] = new (context =>
+            {
+                context.Saga.TemplateId = context.Message.TemplateId;
+                if (context.Message is SignUpForNewsletter msg)
+                {
+                    context.Saga.Email = msg.Email;
+                }
+            }),
             ["SetSubscriptionInfo"] = new (context =>
             {
                 if (context.Message is SubscriberCreated msg)
@@ -71,6 +81,7 @@ public class OnboardingStateMachine : CorrelatingStateMachine<OnboardingStateMac
 
         _eventBuilders = new Dictionary<string, IEventBehaviorBuilder>
         {
+            [nameof(SignUpForNewsletter)] = new EventBehaviorBuilder<SignUpForNewsletter>(SignUpForNewsletter!),
             [nameof(SubscriberCreated)] = new EventBehaviorBuilder<SubscriberCreated>(SubscriberCreated!),
             [nameof(WelcomeEmailSent)] = new EventBehaviorBuilder<WelcomeEmailSent>(WelcomeEmailSent!),
             [nameof(FollowUpEmailSent)] = new EventBehaviorBuilder<FollowUpEmailSent>(FollowUpEmailSent!),
@@ -78,6 +89,9 @@ public class OnboardingStateMachine : CorrelatingStateMachine<OnboardingStateMac
 
 
         MapEvents(_eventConfigurators.Select(x => x.Key).Distinct().ToList(), this);
+
+        if (behaviorSteps == null)
+            return;
 
         BehaviorBuilder(behaviorSteps);
     }
